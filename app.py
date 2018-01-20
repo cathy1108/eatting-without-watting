@@ -32,6 +32,12 @@ import API_function
 import restaurant_choice_function
 import date_choice_function
 
+#database
+customer_statuses = db.customer_statuses
+customer_profiles = db.customer_profiles
+order_list = db.order_list
+stores = db.stores
+store_profiles =db.store_profiles
 
 
 
@@ -73,12 +79,7 @@ def handle_message(event):
     message = event.message.text
     userid=event.source.user_id
 
-    #database
-    customer_statuses = db.customer_statuses
-    customer_profiles = db.customer_profiles
-    order_list = db.order_list
-    stores = db.stores
-    store_profiles =db.store_profiles
+
 
     restaurant_list=["貳樓","西堤"]
     time=[]
@@ -92,6 +93,15 @@ def handle_message(event):
     1. rich menu 減少打字機會
     2. 餐廳button 自動化
     3. 解決多個餐廳button無法顯示問題
+    2018-01-10
+    4. 目前已算完成初版
+    2018-01-20error_message_1
+    5. 以下為有想法未做的內容
+        a. 剛開始點選 "定位" =>就給R_ID ==> order_list 就創建document
+        b. 設置一個取消流程，若訂到一半不定可以按取消
+            ba. 將status 回到 1
+            bb. 當下的那筆R_ID 對應到的 order_list 刪除
+            bc  因此一開始customer_statues 要記錄仍在定位中的R_ID
 
     '''
     if message=="訂位":
@@ -109,12 +119,24 @@ def handle_message(event):
     '''
     1. date picker 判斷 line 版本跳出??
     2. 商家端資料創建責任歸屬 web or bot
+    2018-01-10
+    3. 目前已算完成初版
+    2018-01-20error_message_1
+
 
     '''
 
-    if message in restaurant_list and customer_statuses.find_one({"UID":userid})["status"]==2 :
+    if message in restaurant_list :
         date_choice= date_choice_function.Date(event.message.text,event.source.user_id,event.reply_token,customer_statuses,stores,customer_profiles,order_list,store_profiles)
-        date_choice.Date_choice()
+        reply=date_choice.Date_choice()
+        line_bot_api.reply_message(
+                event.reply_token,
+                reply
+            )
+
+
+
+
         # if stores.find_one({"store":message})==None:
         #     store = {"store": message,
         #             "date": datetime.now().strftime("%Y-%m-%d"),
@@ -227,22 +249,32 @@ class Broadcast_ONE(Resource):
         result = bot.Broadcast_ONE(args['UID'], args['message'])
         args['result'] = result
         return args
-class Remaining_seat_date(Resource):
+class Remaining_seat_date(Resource): #finish     2018-01-20
     def __init__(self):
         self.parser = reqparse.RequestParser()
-        self.parser.add_argument('store_name', type=str)
-        self.parser.add_argument('date', type=lambda x: datetime.strptime(x,'%Y-%m-%d'))
-        self.parser.add_argument('Remaining_seat', type=str)
+        self.parser.add_argument('store', type=str)
+        self.parser.add_argument('Remaining_date', type=str)
     def get(self):
-        result = {'store': 'store\'sname <str>', 'date': 'order date <datetime>','Remaining_seat':'store have a seat at that date or not <str>'}
+        result = {'store': 'store\'sname <str>', 'Remaining_date':'still can booking date <str>'}
         return result
     def post(self):
         args=self.parser.parse_args()
         print ('API GOT:', args, type(args))
-        
+        '''
+        因為button 只能顯示四個 因此查詢未來四天 
+        如果未來要加 在討論     
+        2018-01-20
+        '''
+        week=[]
+        [week.append((datetime.now()+timedelta(days=x)).strftime("%Y-%m-%d")) for x in range(0,4)]
+        show=[]
+        [show.append(week[x]) if order_list.find( { "store_name": args["store"] ,"order_date":week[x]} ).count()<store_profiles.find_one( { "store_name": args["store"] })["total_seat"] else week for x in range(0,4)] 
+        args["Remaining_date"]=show
+        return args
 
 api.add_resource(HelloWorld, '/')
 api.add_resource(Broadcast_ONE, '/say')
+api.add_resource(Remaining_seat_date,'/check_date')
 
 if __name__ == "__main__":
     app.run()

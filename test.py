@@ -17,7 +17,7 @@ store_profiles =db.store_profiles
 app = Flask(__name__)
 
 api = Api(app)
-class Remaining_seat_date(Resource):
+class Remaining_seat_date(Resource): #finish
     def __init__(self):
         self.parser = reqparse.RequestParser()
         self.parser.add_argument('store', type=str)
@@ -28,18 +28,15 @@ class Remaining_seat_date(Resource):
     def post(self):
         args=self.parser.parse_args()
         print ('API GOT:', args, type(args))
+        # 因為button 只能顯示四個 因此查詢未來四天 
+        # 如果未來要加 在討論
         week=[]
         [week.append((datetime.now()+timedelta(days=x)).strftime("%Y-%m-%d")) for x in range(0,4)]
         show=[]
-        [show.append(week[x]) if order_list.find( { "store_name": "貳樓" ,"order_date":week[x]} ).count()<store_profiles.find_one( { "store_name": "貳樓" })["total_seat"] else week for x in range(0,4)] 
+        [show.append(week[x]) if order_list.find( { "store_name": args["store"] ,"order_date":week[x]} ).count()<store_profiles.find_one( { "store_name": args["store"] })["total_seat"] else week for x in range(0,4)] 
         args["Remaining_date"]=show
-        # store=order_list.find( { "store_name": args["store"] } )
-        # cnt=0
-        # for i in range(0,store.count()):
-        #     if store[i]["order_date"]==args["date"]:
-        #         cnt+=1
 
         return args
 api.add_resource(Remaining_seat_date, '/check_date')
 if __name__ == "__main__":
-    app.run(port='3000')
+    app.run(port='4000')

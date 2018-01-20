@@ -10,55 +10,66 @@ class Date:
 		self.customer_profiles = customer_profiles
 		self.order_list = order_list
 		self.store_profiles=store_profiles
+
 	def Date_choice(self):
 		from linebot.models import (
 		    MessageEvent, TextMessage, TextSendMessage,TemplateSendMessage,MessageTemplateAction,CarouselTemplate,CarouselColumn,ButtonsTemplate
 		)
 		from datetime import datetime  
 		from datetime import timedelta  
+		import requests
 
-		restaurant_choice=TemplateSendMessage(
-						alt_text='Carousel template',
-						template=CarouselTemplate(
-							columns=[
-								CarouselColumn(
-									title='貳樓',
-			                        text='貳樓餐廳阿',
-			                        actions=[
-			                        	MessageTemplateAction(
-			                        		label='選擇',
-			                                text='貳樓',
-			                                )
-			                            ]
-			                       	),
-			                    CarouselColumn(
-			                        title='西堤',
-			                        text='西堤餐廳喔',
-			                        actions=[
-			                            MessageTemplateAction(
-			                            	label='選擇',
-			                                text='西堤',
-			                            	)
-			                    		]
-			                          )
-			                    ]
-		                	)
-		           	 	)
-		error_message=TextSendMessage(text='您尚未完成上一個訂位流程')
+		date=requests.post('http://127.0.0.1:4000/check_date', json={"store":self.message}).json()['Remaining_date']
+			
+		action=[]
+		for i in date :
+			button=MessageTemplateAction(
+        		label=i,
+                text=i
+             )
+			action.append(button)
 
-		if self.stores.find_one({"store_name":self.message})==None:
 
-			store={
-				"store_name":self.message,
-				"order_date":datetime.now().strftime("%Y-%m-%d"),
-				"R_ID_list":[],
-			}
-			self.stores.insert_one(store).inserted_id
-			detail={}
-			store=self.store_profiles.find_one({"store_name":self.message})
-			for i in range(3,len(list(store.keys()))):
-				detail[list(store.keys())[i]]=0
-			self.stores.update_one({"store_name": self.message},{"$set":detail})
+		date_choice=TemplateSendMessage(
+		    alt_text='Buttons template',
+		    template=ButtonsTemplate(
+		        title='日期選擇',
+		        text='請選擇則要訂餐的日期',
+		        actions=action
+		    )
+		)
+
+		error_message_1=TextSendMessage(text='您尚未開始定位流程')
+		error_message_2=TextSendMessage(text='您尚未完成上一個訂位流程')
+
+		if self.customer_statuses.find_one({"UID": self.userid})==None:
+			return error_message_1
+		else:
+			if self.customer_statuses.find_one({"UID":self.userid})["status"]==2 :
+				if self.stores.find_one({"store_name":self.message})==None:
+					store={
+						"store_name":self.message,
+						"order_date":datetime.now().strftime("%Y-%m-%d"),
+						"R_ID_list":[]
+						}
+					self.stores.insert_one(store).inserted_id
+					detail={}
+					store=self.store_profiles.find_one({"store_name":self.message})
+					delte=['_id','total_seat','ntable','store_name']
+					for i in delte:
+						store.pop(i, None)
+					for key in store:
+						detail[key]=0
+					self.stores.update_one({"store_name": self.message},{"$set":detail})
+				self.customer_statuses.update_one({"UID": self.userid},{"$set":{"status":3}})
+				return date_choice
+
+			elif self.customer_statuses.find_one({"UID":self.userid})["status"]==1:
+				return error_message_1
+			else:
+				return error_message_2
+
+			
 		
 
 		# if self.customer_profiles.find_one({"UID": self.userid})==None:

@@ -15,24 +15,24 @@ order_list = db.order_list
 stores = db.stores
 store_profiles =db.store_profiles
 
-# a=datetime.now()
-# b=datetime(a.year,a.month,a.day,0,0,0)
-# number=int((round((a-b).total_seconds(),2))*100)
+a=datetime.now()
+b=datetime(a.year,a.month,a.day,0,0,0)
+number=int((round((a-b).total_seconds(),2))*100)
 
-# order={
-# 	"UID":number+1,
-# 	"R_ID":number,
-# 	"store_name":"貳樓",
-# 	"order_date":(datetime.now()+timedelta(days=1)).strftime("%Y-%m-%d"),
-# 	"n_pepole":5,
-# 	"slot":"1200-1230",
-# 	"enter_time":"",
-# 	"end_tiime":""
-# 	}
-# order_list.insert_one(order).inserted_id
+order={
+	"UID":number+1,
+	"R_ID":number,
+	"store_name":"貳樓",
+	"order_date":(datetime.now()+timedelta(days=1)).strftime("%Y-%m-%d"),
+	"n_pepole":5,
+	"slot":"1200-1230",
+	"enter_time":"",
+	"end_tiime":""
+	}
+order_list.insert_one(order).inserted_id
 
 # store_profile={
-# 	"store_name":"=貳樓",
+# 	"store_name":"貳樓",
 # 	"ntable":[2,4],
 # 	"2_table":{"total":3,"1200-1230":1,"1230-1300":1,"1300-1330":1},
 # 	"4_table":{"total":4,"1200-1230":2,"1230-1300":1,"1300-1330":1},
@@ -71,5 +71,5 @@ store_profiles =db.store_profiles
 # 	week.append((datetime.now()+timedelta(days=i)).strftime("%Y-%m-%d"))
 
 
-r=requests.post('http://127.0.0.1:3000/check_date', json={"store":"貳樓"})
-print(r.json()['Remaining_date'])
+# r=requests.post('http://127.0.0.1:3000/check_date', json={"store":"貳樓"})
+# print(r.json()['Remaining_date'])

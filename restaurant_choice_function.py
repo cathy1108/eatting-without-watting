@@ -1,5 +1,4 @@
 class restaurant:
-	"""docstring for booking"""
 	def __init__(self,message,userid,TextSendMessage,TemplateSendMessage,MessageTemplateAction,CarouselTemplate,CarouselColumn,customer_statuses,stores,customer_profiles,order_list):
 		super(restaurant, self).__init__()
 		self.message = message
